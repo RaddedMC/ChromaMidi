@@ -17,6 +17,12 @@ App = ChromaApp(Info)
 MousepadGrid = ChromaGrid('Mousepad')
 App.Mousepad.setStatic(Colors.BLUE)
 
+#Welcome
+print("---------------------------------------")
+print("Thanks for checking out RaddedMC's ChromaMidi program! Let's get started:")
+print("Note: This version of ChromaMidi currently only supports Chroma-enabled mousepads. Other devices can be added on request. Open the Chroma Connect app or PM u/RaddedMC if you're interested in support for other devices.")
+print("---------------------------------------")
+
 #light test
 print("The mousepad has " + str(len(MousepadGrid)) + " lights.")
 
@@ -54,12 +60,19 @@ for i in range(0, len(MousepadGrid)):
     App.Mousepad.applyGrid()
     print("Light " + str(i) + ": OFF")
     
+print("---------------------------------------")
 print("Test complete. Initializing midi.")
+print("Note: If your device's LEDs did not light up, make sure that Chroma Connect is enabled and that your device is visible to Razer Synapse.")
+print("---------------------------------------")
+print("Please select your virtual midi port below:")
 
 def setALight(lightToSet, lightR, lightG, lightB):
-    MousepadGrid[lightToSet].set(red=lightR, green=lightG, blue=lightB)
-    App.Mousepad.setCustomGrid(MousepadGrid)
-    App.Mousepad.applyGrid()
+    try:
+        MousepadGrid[lightToSet].set(red=lightR, green=lightG, blue=lightB)
+        App.Mousepad.setCustomGrid(MousepadGrid)
+        App.Mousepad.applyGrid()
+    except IndexError:
+        print("Index out of range!")
     # 0 is Razer logo, goes around downwards
 
 def interpretVelColor(vel):
@@ -508,6 +521,7 @@ port = sys.argv[1] if len(sys.argv) > 1 else None # Prompts user for MIDI input 
                                                   # API backend defaults to ALSA on Linux.
 midiin, port_name = open_midiinput(port)
 print("Midi opened on device " + str(port_name) + ".")
+print("---------------------------------------")
 
 while True:
     msg = midiin.get_message()
@@ -518,15 +532,12 @@ while True:
         if msg[0][0] == 144:
             # ON
             colors = interpretVelColor(msg[0][2])
+            print("%r: Light %i set to (%s,%s,%s)" % (msg, led_num, colors[0], colors[1], colors[2]))
+            setALight(abs(led_num), colors[0], colors[1], colors[2])
         elif msg[0][0] == 128:
             # OFF
-            pass
-        
-        print("%r: %i set to (%s,%s,%s)" % (msg, led_num, colors[0], colors[1], colors[2]))
-        try:
-            setALight(led_num, colors[0], colors[1], colors[2])
-        except IndexError:
-            print("Index out of range!")
+            print("%r: Turning off light %i" % (msg, led_num))
+            setALight(abs(led_num), colors[0], colors[1], colors[2])
     
     
 # [noteon/off, note value, velocity]
